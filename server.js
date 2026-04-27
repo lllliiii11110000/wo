@@ -1,27 +1,20 @@
 const WebSocket = require('ws');
 const http = require('http');
 
+// 强制绑定到 Railway 内部监听地址，避免端口冲突
 const server = http.createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('OK');
 });
 
-const wss = new WebSocket.Server({ server });
-
-// 关键修改：只使用 Railway 分配的动态端口，绝不 fallback 到 8080
+// 直接使用 Railway 分配的端口，绝不 fallback
 const PORT = process.env.PORT;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ 服务器运行在端口 ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
 
+const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws) => {
-  console.log('✅ 新客户端已连接');
   ws.on('message', (message) => {
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -29,5 +22,4 @@ wss.on('connection', (ws) => {
       }
     });
   });
-  ws.on('close', () => console.log('❌ 客户端断开连接'));
 });
