@@ -23,3 +23,13 @@ wss.on('connection', (ws) => {
     });
   });
 });
+// 在现有代码基础上，加上这一条路由处理
+const server = http.createServer((req, res) => {
+  if (req.url === '/ok') {
+    res.writeHead(200);
+    res.end('ok');
+  } else {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
+  }
+});
