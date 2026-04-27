@@ -1,35 +1,44 @@
 const WebSocket = require('ws');
 const http = require('http');
 
-// 强制绑定到 Railway 内部监听地址，避免端口冲突
+// 创建 HTTP 服务器
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('OK');
+  // 健康检查路径（Railway 需要）
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
+  } else {
+    res.writeHead(404);
+    res.end('Not Found');
+  }
 });
 
-// 直接使用 Railway 分配的端口，绝不 fallback
-const PORT = process.env.PORT;
+// 读取端口
+const PORT = process.env.PORT || 8080;
+
+// 启动服务器（监听所有地址）
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
+// WebSocket 服务
 const wss = new WebSocket.Server({ server });
+
 wss.on('connection', (ws) => {
+  console.log('New client connected');
+  
   ws.on('message', (message) => {
+    console.log('Received:', message.toString());
+    
+    // 广播给所有连接的客户端
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(message.toString());
       }
     });
   });
-});
-// 在现有代码基础上，加上这一条路由处理
-const server = http.createServer((req, res) => {
-  if (req.url === '/ok') {
-    res.writeHead(200);
-    res.end('ok');
-  } else {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('OK');
-  }
+  
+  ws.on('close', () => {
+    console.log('Client disconnected');
+  });
 });
