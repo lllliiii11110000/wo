@@ -14,7 +14,7 @@ const server = http.createServer((req, res) => {
 
 const wss = new WebSocket.Server({ server });
 
-// 关键修改：只使用 Railway 分配的动态端口，不再 fallback 到 8080
+// 必须只使用 Railway 分配的端口，不能写死 8080
 const PORT = process.env.PORT;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ 服务器运行在端口 ${PORT}`);
